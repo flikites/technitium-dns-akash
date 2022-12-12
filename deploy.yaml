@@ -1,0 +1,59 @@
+---
+version: '2.0'
+endpoints:
+ techdnsep1111: #must be unique per deployment#
+   kind: ip
+services:
+  dns:
+    image: 'technitium/dns-server:10.0.1'
+    expose:
+      - port: 53
+        as: 53
+        proto: tcp
+        to:
+          - global: true
+            ip: techdnsep1
+      - port: 53
+        as: 53
+        proto: udp
+        to:
+          - global: true
+            ip: techdnsep1111 #must match endpoints#
+      - port: 5380
+        as: 5380
+        proto: tcp
+        to:
+          - global: true
+    params:
+      storage:
+        config:
+          mount: /etc/dns/config
+          readOnly: false
+profiles:
+  compute:
+    dns:
+      resources:
+        cpu:
+          units: 1
+        memory:
+          size: 1Gi
+        storage:
+          - size: 100Mi
+          - name: config
+            size: 5Gi
+            attributes:
+              persistent: true
+              class: beta3
+  placement:
+    dcloud:
+      attributes:
+        ip-lease: true
+      pricing:
+        dns:
+          denom: uakt
+          amount: 1000
+deployment:
+  dns:
+    dcloud:
+      profile: dns
+      count: 1
